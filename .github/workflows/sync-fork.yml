@@ -1,0 +1,25 @@
+name: Sync Fork with Upstream
+
+permissions:
+  contents: write
+
+on:
+  schedule:
+    - cron: '0 8 * * *' # 08:00 UTC (16:00 UTC+8)
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Sync fork with upstream
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          UPSTREAM=$(gh api "repos/$GITHUB_REPOSITORY" --jq '.parent.full_name')
+          if [ "$UPSTREAM" = "null" ] || [ -z "$UPSTREAM" ]; then
+            echo "当前仓库不是 Fork，跳过同步。"
+            exit 0
+          fi
+          echo "上游仓库: $UPSTREAM"
+          gh repo sync "$GITHUB_REPOSITORY" --source "$UPSTREAM"
